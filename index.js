@@ -1,27 +1,23 @@
 const express = require("express");
 const app = express();
+require("dotenv").config();
 
-app.use(express.json());
-
-// Step 1: Meta (Facebook) Webhook Verification
 app.get("/webhook", (req, res) => {
-    const VERIFY_TOKEN = "your_verify_token";
-    const mode = req.query["hub.mode"];
-    const token = req.query["hub.verify_token"];
-    const challenge = req.query["hub.challenge"];
+    console.log("Received request:", req.query);
 
-    if (mode && token === VERIFY_TOKEN) {
+    let mode = req.query["hub.mode"];
+    let token = req.query["hub.verify_token"];
+    let challenge = req.query["hub.challenge"];
+
+    if (mode === "subscribe" && token === process.env.VERIFY_TOKEN) {
+        console.log("WEBHOOK VERIFIED!");
         res.status(200).send(challenge);
     } else {
+        console.log("Forbidden - Invalid token");
         res.sendStatus(403);
     }
 });
 
-// Step 2: Receive WhatsApp Messages
-app.post("/webhook", (req, res) => {
-    console.log("Received a message:", JSON.stringify(req.body, null, 2));
-    res.sendStatus(200);
+app.listen(process.env.PORT || 3000, () => {
+    console.log("Server is running");
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Webhook server running on port ${PORT}`));
