@@ -12,23 +12,24 @@ app.post("/webhook", async (req, res) => {
     try {
         console.log("Full request body:", JSON.stringify(req.body, null, 2));
 
-        // Extract messages from the correct nested structure
-        const messageData = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+        const messages = req.body.entry?.[0]?.changes?.[0]?.value?.messages;
 
-        if (!messageData) {
+        if (!messages || messages.length === 0) {
             console.log("No messages array found in request.");
             return res.status(400).send("No message data received.");
         }
 
-        const text = messageData.text?.body;
-        const sender = messageData.from;
+        // Combine multiple messages if they exist
+        const fullMessage = messages.map(msg => msg.text?.body).join("\n");
 
-        console.log(`Received message from ${sender}: ${text}`);
+        const sender = messages[0].from;
+
+        console.log(`Received message from ${sender}: ${fullMessage}`);
 
         // Send data to Google Apps Script
         const response = await axios.post(googleScriptUrl, {
             sender: sender,
-            message: text,
+            message: fullMessage,
         });
 
         res.status(200).send("Message forwarded to Google Sheets!");
