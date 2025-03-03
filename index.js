@@ -12,7 +12,9 @@ app.post("/webhook", async (req, res) => {
     try {
         console.log("Full request body:", JSON.stringify(req.body, null, 2));
 
-        const messageData = req.body.messages?.[0];
+        // Extract messages from the correct nested structure
+        const messageData = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+
         if (!messageData) {
             console.log("No messages array found in request.");
             return res.status(400).send("No message data received.");
