@@ -35,10 +35,19 @@ app.post("/webhook", async (req, res) => {
         if (Object.keys(updates).length > 0) {
             // Send structured updates to Google Apps Script
             try {
-                const response = await axios.post(googleScriptUrl, {
-                    sender: sender,
-                    updates: updates,
-                });
+                const response = try {
+                    const response = await axios.post(googleScriptUrl, {
+                        sender: sender,
+                        updates: updates,
+                    });
+
+                    console.log("Google Apps Script Response:", response.data);
+                    return res.status(200).send("Task update processed and forwarded to Google Sheets!");
+                } catch (error) {
+                    console.error("Error sending data to Google Apps Script:", error.response?.data || error.message);
+                    return res.status(500).send("Failed to forward message to Google Sheets.");
+                }
+
 
                 console.log("Google Apps Script Response:", response.data); // Log Google Apps Script response
                 res.status(200).send("Task update processed and forwarded to Google Sheets!");
