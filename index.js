@@ -25,11 +25,22 @@ app.post('/webhook', (req, res) => {
             const value = change.value;
 
             if (value.messages) {
-                console.log("Incoming message received:", JSON.stringify(value.messages, null, 2));
-                // Handle incoming messages
+                value.messages.forEach(message => {
+                    if (message.type === "text") {
+                        const sender = message.from;
+                        const textBody = message.text.body;
+
+                        console.log(`Received message from ${sender}: ${textBody}`);
+
+                        // Extract task updates from the message
+                        const updates = extractTaskUpdates(textBody);
+
+                        // Send data to Google Apps Script
+                        sendToGoogleScript(sender, updates);
+                    }
+                });
             } else if (value.statuses) {
                 console.log("Message status update received:", JSON.stringify(value.statuses, null, 2));
-                // Handle message delivery status updates
             } else {
                 console.log("Unknown event type:", JSON.stringify(value, null, 2));
             }
@@ -53,6 +64,20 @@ function extractTaskUpdates(userResponse) {
 
     console.log(`Extracted task updates: ${JSON.stringify(updates)}`);
     return updates;
+}
+
+// Function to send extracted data to Google Apps Script
+function sendToGoogleScript(sender, updates) {
+    axios.post(googleScriptUrl, {
+        sender: sender,
+        taskUpdates: updates
+    })
+        .then(response => {
+            console.log("Successfully sent to Google Script:", response.data);
+        })
+        .catch(error => {
+            console.error("Error sending to Google Script:", error.message);
+        });
 }
 
 const PORT = process.env.PORT || 3000;
