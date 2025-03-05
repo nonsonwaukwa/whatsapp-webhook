@@ -12,59 +12,31 @@ const RESPONSE_WINDOW = 10 * 60 * 1000; // 10 minutes in milliseconds
 const taskResponses = {}; // Temporary storage for tracking messages
 
 // Webhook to receive messages
-app.post("/webhook", async (req, res) => {
-    try {
-        console.log("Full request body:", JSON.stringify(req.body, null, 2));
+app.post('/webhook', (req, res) => {
+    const body = req.body;
 
-        const messages = req.body.entry?.[0]?.changes?.[0]?.value?.messages;
-
-        if (!messages || messages.length === 0) {
-            console.log("No messages array found in request.");
-            return res.status(400).send("No message data received.");
-        }
-
-        const fullMessage = messages.map(msg => msg.text?.body).join("\n");
-        const sender = messages[0].from;
-        const messageId = messages[0].id;
-
-        console.log(`Received message from ${sender}: ${fullMessage}`);
-
-        // Process task response
-        const updates = extractTaskUpdates(fullMessage);
-
-        if (Object.keys(updates).length > 0) {
-            // Send structured updates to Google Apps Script
-            try {
-                let response;
-                try {
-                    const response = await axios.post(googleScriptUrl, {
-                        sender: sender,
-                        updates: updates,
-                    });
-
-                    console.log("Google Apps Script Response:", response.data);
-                    return res.status(200).send("Task update processed and forwarded to Google Sheets!");
-                } catch (error) {
-                    console.error("Error sending data to Google Apps Script:", error.response?.data || error.message);
-                    return res.status(500).send("Failed to forward message to Google Sheets.");
-                }
-
-
-                console.log("Google Apps Script Response:", response.data); // Log Google Apps Script response
-                res.status(200).send("Task update processed and forwarded to Google Sheets!");
-            } catch (error) {
-                console.error("Error sending data to Google Apps Script:", error.response?.data || error.message);
-                res.status(500).send("Failed to forward message to Google Sheets.");
-            }
-
-            res.status(200).send("Task update processed and forwarded to Google Sheets!");
-        } else {
-            res.status(200).send("No valid task update found.");
-        }
-    } catch (error) {
-        console.error("Error forwarding message:", error);
-        res.status(500).send("Failed to forward message.");
+    if (!body || !body.entry || body.entry.length === 0) {
+        console.log("Invalid request format.");
+        return res.sendStatus(400);
     }
+
+    body.entry.forEach(entry => {
+        entry.changes.forEach(change => {
+            const value = change.value;
+
+            if (value.messages) {
+                console.log("Incoming message received:", JSON.stringify(value.messages, null, 2));
+                // Handle incoming messages
+            } else if (value.statuses) {
+                console.log("Message status update received:", JSON.stringify(value.statuses, null, 2));
+                // Handle message delivery status updates
+            } else {
+                console.log("Unknown event type:", JSON.stringify(value, null, 2));
+            }
+        });
+    });
+
+    res.sendStatus(200);
 });
 
 // Function to extract task numbers and statuses (✅/❌) from a message
