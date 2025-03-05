@@ -35,7 +35,8 @@ app.post("/webhook", async (req, res) => {
         if (Object.keys(updates).length > 0) {
             // Send structured updates to Google Apps Script
             try {
-                const response = try {
+                let response;
+                try {
                     const response = await axios.post(googleScriptUrl, {
                         sender: sender,
                         updates: updates,
