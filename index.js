@@ -6,7 +6,7 @@ const app = express();
 app.use(bodyParser.json());
 
 const googleScriptUrl =
-    "https://script.google.com/macros/s/AKfycbz3c_WWgkaanEpplVwV3G54JRoOa6v3BCyEM-jY6Vt6kV3jPBffqafXsuFkT9jSMdIF/exec";
+    "https://script.google.com/macros/s/AKfycbwopFWk0voUZvae-MoObp2jRkKL4iVPQnbwUX3UD5Ch_y3nL566U7v8oTC5VfymrqleBg/exec";
 
 const RESPONSE_WINDOW = 10 * 60 * 1000; // 10 minutes in milliseconds
 const taskResponses = {}; // Temporary storage for tracking messages
