@@ -29,14 +29,22 @@ app.post('/webhook', (req, res) => {
                     if (message.type === "text") {
                         const sender = message.from;
                         const textBody = message.text.body;
+                        const messageId = message.id; // Get message ID
 
                         console.log(`Received message from ${sender}: ${textBody}`);
+
+                        // Store response in taskResponses
+                        taskResponses[messageId] = {
+                            sender: sender,
+                            message: textBody,
+                            timestamp: Date.now()
+                        };
 
                         // Extract task updates from the message
                         const updates = extractTaskUpdates(textBody);
 
                         // Send data to Google Apps Script
-                        sendToGoogleScript(sender, updates);
+                        sendToGoogleScript(sender, updates, messageId);
                     }
                 });
             } else if (value.statuses) {
@@ -67,17 +75,34 @@ function extractTaskUpdates(userResponse) {
 }
 
 // Function to send extracted data to Google Apps Script
-function sendToGoogleScript(sender, updates) {
-    axios.post(googleScriptUrl, {
+function sendToGoogleScript(sender, updates, messageId) {
+    const response = {
         sender: sender,
-        taskUpdates: updates
-    })
-        .then(response => {
-            console.log("Successfully sent to Google Script:", response.data);
+        taskUpdates: updates,
+        messageId: messageId
+    };
+
+    axios.post(googleScriptUrl, response)
+        .then(res => {
+            console.log("Successfully sent to Google Script:", res.data);
+            handleTaskResponse(response); // Call handleTaskResponse here
         })
         .catch(error => {
             console.error("Error sending to Google Script:", error.message);
         });
+}
+
+// Function to process task responses (placeholder, implement actual logic)
+function handleTaskResponse(response) {
+    console.log(`Processing task response for ${response.sender}:`, response.taskUpdates);
+
+    // Example: Check if response is within 10-minute window
+    const messageId = response.messageId;
+    if (taskResponses[messageId] && (Date.now() - taskResponses[messageId].timestamp) <= RESPONSE_WINDOW) {
+        console.log(`Task response within valid window:`, response.taskUpdates);
+    } else {
+        console.log(`Task response outside valid window or missing.`);
+    }
 }
 
 const PORT = process.env.PORT || 3000;
