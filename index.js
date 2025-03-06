@@ -82,7 +82,13 @@ function sendToGoogleScript(sender, updates, messageId) {
         messageId: messageId
     };
 
-    axios.post(googleScriptUrl, response)
+    axios.post(googleScriptUrl, {
+        ...response,  // Spread existing response object
+        sender: sender,  // Add sender details
+        taskUpdates: updates  // Add task updates
+    }, {
+        headers: { "Content-Type": "application/json" }
+    })
         .then(res => {
             console.log("Successfully sent to Google Script:", res.data);
             handleTaskResponse(response); // Call handleTaskResponse here
@@ -90,6 +96,7 @@ function sendToGoogleScript(sender, updates, messageId) {
         .catch(error => {
             console.error("Error sending to Google Script:", error.message);
         });
+
 }
 
 // Function to process task responses (placeholder, implement actual logic)
